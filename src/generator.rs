@@ -76,41 +76,20 @@ pub fn stripes_ac() -> RectGenerator<ElasticTile> {
     return RectGenerator::new([
         [ElasticTile::type_a(), ElasticTile::type_c()],
         [ElasticTile::type_c(), ElasticTile::type_a()]
-    ], Vec2::new(6, 6));
+    ], Vec2::new(8, 8));
 }
 
 pub fn stripes_bd() -> RectGenerator<ElasticTile> {
     return RectGenerator::new([
         [ElasticTile::type_b(), ElasticTile::type_d()],
         [ElasticTile::type_d(), ElasticTile::type_b()]
-    ], Vec2::new(6, 6));
+    ], Vec2::new(8, 8));
 }
 
 pub fn rand() -> RectGenerator<ElasticTile> {
     return RectGenerator::new([
         [ElasticTile::type_b(), ElasticTile::type_a()],
         [ElasticTile::type_c(), ElasticTile::type_d()]
-    ], Vec2::new(6, 6));
-}
-
-pub fn rand2() -> RectGenerator<ElasticTile> {
-    return RectGenerator::new([
-        [ElasticTile::type_c(), ElasticTile::type_b()],
-        [ElasticTile::type_d(), ElasticTile::type_a()]
-    ], Vec2::new(6, 6));
-}
-
-pub fn rand3() -> RectGenerator<ElasticTile> {
-    return RectGenerator::new([
-        [ElasticTile::type_a(), ElasticTile::type_b()],
-        [ElasticTile::type_a(), ElasticTile::type_b()]
-    ], Vec2::new(6, 6));
-}
-
-pub fn rand4() -> RectGenerator<ElasticTile> {
-    return RectGenerator::new([
-        [ElasticTile::type_b(), ElasticTile::type_c()],
-        [ElasticTile::type_a(), ElasticTile::type_d()]
-    ], Vec2::new(6, 6));
+    ], Vec2::new(8, 8));
 }
 

@@ -7,42 +7,85 @@ pub trait Tile: Clone + Copy {
 }
 
 #[derive(Clone, Copy)]
+pub enum ElasticTileType {
+    ///
+    /// ```
+    /// |*       |
+    /// |***     |
+    /// |*****   |
+    /// |********|
+    /// 
+    A,
+    ///
+    /// ```
+    /// |********|
+    /// |*****   |
+    /// |***     |
+    /// |*       |
+    /// 
+    B,
+    ///
+    /// ```
+    /// |********|
+    /// |  ******|
+    /// |     ***|
+    /// |       *|
+    /// 
+    C,
+    ///
+    /// ```
+    /// |       *|
+    /// |     ***|
+    /// |  ******|
+    /// |********|
+    /// 
+    D
+}
+
+impl ToString for ElasticTileType {
+    fn to_string(&self) -> String {
+        return match self {
+            ElasticTileType::A => "A".to_owned(),
+            ElasticTileType::B => "B".to_owned(),
+            ElasticTileType::C => "C".to_owned(),
+            ElasticTileType::D => "D".to_owned(),
+        };
+    }
+}
+
+#[derive(Clone, Copy)]
 pub struct ElasticTile {
     t: f32,
-    black_vertex_index: u8
+    tile_type: ElasticTileType
 }
 
 impl ElasticTile {
-    pub const fn new(t: f32, black_vertex_index: u8) -> Self { 
-        return Self { t, black_vertex_index };
-    }
-
-    pub const fn with_black_vertex(black_vertex_index: u8) -> Self {
-        return Self::new(0.5, black_vertex_index);
+    pub const fn new(t: f32, tile_type: ElasticTileType) -> Self { 
+        return Self { t, tile_type };
     }
 
     pub const fn type_a() -> Self {
-        return Self::with_black_vertex(0);
+        return Self::new(0.5, ElasticTileType::A);
     }
 
     pub const fn type_b() -> Self {
-        return Self::with_black_vertex(1);
+        return Self::new(0.5, ElasticTileType::B);
     }
 
     pub const fn type_c() -> Self {
-        return Self::with_black_vertex(2);
+        return Self::new(0.5, ElasticTileType::C);
     }
 
     pub const fn type_d() -> Self {
-        return Self::with_black_vertex(3);
+        return Self::new(0.5, ElasticTileType::D);
     }
 
     fn point(&self) -> Vec2<f32> {
-        return  match self.black_vertex_index {
-            0 => Vec2::new(1.0 - (0.5  * self.t + 0.25),  1.0 - (0.5 * self.t + 0.25)),
-            1 => Vec2::new(1.0 - (0.5 * self.t + 0.25),   (0.5 * self.t + 0.25)),
-            2 => Vec2::new((0.5  * self.t + 0.25),  (0.5 * self.t + 0.25)),
-            _ => Vec2::new(0.5 * self.t + 0.25,   1.0 - (0.5 * self.t + 0.25)),
+        return  match self.tile_type {
+            ElasticTileType::A => Vec2::new(1.0 - (0.5  * self.t + 0.25),  0.5 * self.t + 0.25),
+            ElasticTileType::B => Vec2::new(1.0 - (0.5 * self.t + 0.25),   1.0 - (0.5 * self.t + 0.25)),
+            ElasticTileType::C => Vec2::new(0.5  * self.t + 0.25,  1.0 - (0.5 * self.t + 0.25)),
+            ElasticTileType::D => Vec2::new(0.5 * self.t + 0.25,  0.5 * self.t + 0.25),
         };
     }
 }
@@ -61,11 +104,11 @@ impl Tile for ElasticTile {
 
 impl ToSVG for ElasticTile {
     fn to_svg_node(&self, scale: f32, origin: Vec2<f32>) -> Box<dyn Node> {
-        let (mut x, mut y) = match self.black_vertex_index {
-            0 => (vec![1_f32, 0_f32, 0_f32], vec![0_f32, 0_f32, 1_f32]),
-            1 => (vec![0_f32, 0_f32, 1_f32], vec![0_f32, 1_f32, 1_f32]),
-            2 => (vec![0_f32, 1_f32, 1_f32], vec![1_f32, 1_f32, 0_f32]),
-            _ => (vec![1_f32, 1_f32, 0_f32], vec![1_f32, 0_f32, 0_f32])
+        let (mut x, mut y) = match self.tile_type {
+            ElasticTileType::A => (vec![1_f32, 0_f32, 0_f32], vec![1_f32, 1_f32, 0_f32]),
+            ElasticTileType::B => (vec![0_f32, 0_f32, 1_f32], vec![1_f32, 0_f32, 0_f32]),
+            ElasticTileType::C => (vec![0_f32, 1_f32, 1_f32], vec![0_f32, 0_f32, 1_f32]),
+            ElasticTileType::D => (vec![1_f32, 1_f32, 0_f32], vec![0_f32, 1_f32, 1_f32])
         };
 
         let t = self.point();
@@ -84,7 +127,7 @@ impl ToSVG for ElasticTile {
         let polygon = Polygon::new()
             .set("points", points)
             .set("t", self.t)
-            .set("type", self.black_vertex_index);
+            .set("type", self.tile_type.to_string());
 
         return Box::new(polygon);
     }
