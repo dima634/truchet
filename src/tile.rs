@@ -120,8 +120,7 @@ impl ToSVG for ElasticTile {
             .zip(
                 y.into_iter().map(|y| y * scale + origin.y())
             )
-            .map(|(x, y)| [x, y])
-            .flatten()
+            .flat_map(|(x, y)| [x, y])
             .collect();
 
         let polygon = Polygon::new()
