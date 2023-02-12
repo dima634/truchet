@@ -63,7 +63,7 @@ impl<TTile: Tile + ToSVG> ToSVG for RectGenerator<TTile> {
                 let origin_x = tile_x as f32 * scale + origin.x();
                 let origin_y = tile_y as f32 * scale + origin.y();
 
-                let tile = self.tiles[tile_x * self.generator_block_size.y() + tile_y].to_svg_node(scale, Vec2::new(origin_x, origin_y));
+                let tile = self.tiles[tile_y * self.generator_block_size.x() + tile_x].to_svg_node(scale, Vec2::new(origin_x, origin_y));
                 g.append(tile);
             }
         }
