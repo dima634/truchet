@@ -11,32 +11,29 @@ pub trait Generator {
 }
 
 #[derive(Clone)]
-pub struct RectGenerator<TTile: Tile> {
-    generator_block_size: Vec2<usize>,
-    source_image_block_size: Vec2<usize>,
-    tiles: Vec<TTile>
+pub struct RectGenerator<TTile: Tile, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize> {
+    tiles: [[TTile; GEN_Y_SIZE]; GEN_X_SIZE]
 }
 
-impl<TTile: Tile> RectGenerator<TTile> {
-    pub fn new<const X: usize, const Y: usize>(tiles: [[TTile; Y]; X], source_image_block_size: Vec2<usize>) -> Self { 
-        let mut vec = Vec::with_capacity(X * Y);
-        vec.extend(tiles.iter().flatten());
 
-        return Self { 
-            generator_block_size: Vec2::new(X, Y),
-            tiles: vec,
-            source_image_block_size
-        };
+impl<TTile: Tile, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize> 
+    RectGenerator<TTile, GEN_X_SIZE, GEN_Y_SIZE, SRC_X_SIZE, SRC_Y_SIZE>
+{
+    pub fn new(tiles: [[TTile; GEN_Y_SIZE]; GEN_X_SIZE]) -> Self { 
+        return Self { tiles };
     }
 }
 
-impl<TTile: Tile> Generator for RectGenerator<TTile> {
+impl<TTile: Tile, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize>
+    Generator for
+    RectGenerator<TTile, GEN_X_SIZE, GEN_Y_SIZE, SRC_X_SIZE, SRC_Y_SIZE>
+{
     type TileType = TTile;
 
     fn clone_with_brightness(&self, brightness: f32) -> Self {
         let mut clone = self.clone();
  
-        for tile in &mut clone.tiles {
+        for tile in clone.tiles.iter_mut().flatten() {
             tile.set_brightness(brightness);
         }
 
@@ -45,25 +42,28 @@ impl<TTile: Tile> Generator for RectGenerator<TTile> {
 
     #[inline]
     fn generator_block_size(&self) -> Vec2<usize> {
-        return self.generator_block_size;
+        return Vec2::new(GEN_X_SIZE, GEN_Y_SIZE);
     }
 
     #[inline]
     fn source_image_block_size(&self) -> Vec2<usize> {
-        return self.source_image_block_size;
+        return Vec2::new(SRC_X_SIZE, SRC_Y_SIZE);
     }
 }
 
-impl<TTile: Tile + ToSVG> ToSVG for RectGenerator<TTile> {
+impl<TTile: Tile + ToSVG, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize> 
+    ToSVG for 
+    RectGenerator<TTile, GEN_X_SIZE, GEN_Y_SIZE, SRC_X_SIZE, SRC_Y_SIZE>
+{
     fn to_svg_node(&self, scale: f32, origin: Vec2<f32>) -> Box<dyn Node> {
         let mut g = Group::new();
 
-        for tile_x in 0..*self.generator_block_size.x() {
-            for tile_y in 0..*self.generator_block_size.y() {
-                let origin_x = tile_x as f32 * scale + origin.x();
-                let origin_y = tile_y as f32 * scale + origin.y();
+        for tile_x in 0..GEN_X_SIZE {
+            for tile_y in 0..GEN_Y_SIZE {
+                let origin_x = tile_y as f32 * scale + origin.x();
+                let origin_y = tile_x as f32 * scale + origin.y();
 
-                let tile = self.tiles[tile_y * self.generator_block_size.x() + tile_x].to_svg_node(scale, Vec2::new(origin_x, origin_y));
+                let tile = self.tiles[tile_x][tile_y].to_svg_node(scale, Vec2::new(origin_x, origin_y));
                 g.append(tile);
             }
         }
@@ -72,24 +72,40 @@ impl<TTile: Tile + ToSVG> ToSVG for RectGenerator<TTile> {
     }
 }
 
-pub fn stripes_ac() -> RectGenerator<ElasticTile> {
+pub fn stripes_ac<const IMG_BLOCK_SIZE_X: usize, const IMG_BLOCK_SIZE_Y: usize>() 
+    -> RectGenerator<ElasticTile, 2, 2, IMG_BLOCK_SIZE_X, IMG_BLOCK_SIZE_Y> 
+{
     return RectGenerator::new([
         [ElasticTile::type_a(), ElasticTile::type_c()],
         [ElasticTile::type_c(), ElasticTile::type_a()]
-    ], Vec2::new(8, 8));
+    ]);
 }
 
-pub fn stripes_bd() -> RectGenerator<ElasticTile> {
+pub fn stripes_bd<const IMG_BLOCK_SIZE_X: usize, const IMG_BLOCK_SIZE_Y: usize>()
+    -> RectGenerator<ElasticTile, 2, 2, IMG_BLOCK_SIZE_X, IMG_BLOCK_SIZE_Y> 
+{
     return RectGenerator::new([
         [ElasticTile::type_b(), ElasticTile::type_d()],
         [ElasticTile::type_d(), ElasticTile::type_b()]
-    ], Vec2::new(8, 8));
+    ]);
 }
 
-pub fn rand() -> RectGenerator<ElasticTile> {
+pub fn bosh_d<const IMG_BLOCK_SIZE_X: usize, const IMG_BLOCK_SIZE_Y: usize>()
+    -> RectGenerator<ElasticTile, 2, 2, IMG_BLOCK_SIZE_X, IMG_BLOCK_SIZE_Y> 
+{
     return RectGenerator::new([
         [ElasticTile::type_b(), ElasticTile::type_a()],
         [ElasticTile::type_c(), ElasticTile::type_d()]
-    ], Vec2::new(8, 8));
+    ]);
+}
+
+
+pub fn fan<const IMG_BLOCK_SIZE_X: usize, const IMG_BLOCK_SIZE_Y: usize>()
+    -> RectGenerator<ElasticTile, 2, 2, IMG_BLOCK_SIZE_X, IMG_BLOCK_SIZE_Y> 
+{
+    return RectGenerator::new([
+        [ElasticTile::type_a(), ElasticTile::type_b()],
+        [ElasticTile::type_d(), ElasticTile::type_c()]
+    ]);
 }
 
