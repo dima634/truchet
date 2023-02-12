@@ -1,3 +1,4 @@
+use rand::{prelude::Distribution, distributions::Standard};
 use svg::{node::element::Polygon, Node};
 
 use crate::{to_svg::ToSVG, vec2::Vec2};
@@ -129,5 +130,16 @@ impl ToSVG for ElasticTile {
             .set("type", self.tile_type.to_string());
 
         return Box::new(polygon);
+    }
+}
+
+impl Distribution<ElasticTile> for Standard {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> ElasticTile {
+        match rng.gen_range(0..=3) {
+            0 => ElasticTile::type_a(),
+            1 => ElasticTile::type_b(),
+            2 => ElasticTile::type_c(),
+            _ => ElasticTile::type_d()
+        }
     }
 }
