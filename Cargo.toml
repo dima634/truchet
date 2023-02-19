@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 svg = "0.13.0"
 rand = "0.8.5"
+
+[dev-dependencies]
+image = "0.24.5"
