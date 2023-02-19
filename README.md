@@ -2,6 +2,8 @@
 
 This library provide API to convert image into its "truchet tiles" representation.
 
+# Examples
+
 | Generator      | Original image | Truchet tiles image |
 |----------------| -------------  | ------------------- |
 |<img width="227" alt="image" src="https://user-images.githubusercontent.com/48240075/219941605-b7c471b4-a3c7-463c-9dc3-9f728e3ae295.png">           | <img width="255" height="255" alt="image" src="https://user-images.githubusercontent.com/48240075/219941076-c077809f-3d12-4df4-9902-059736f3b87c.jpg">       | <img width="255" height="255" alt="dog_truchet" src="https://user-images.githubusercontent.com/48240075/219941073-43d69333-e75e-46cf-b30b-801609a92e33.png">  |
