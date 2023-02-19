@@ -2,6 +2,7 @@
 name = "truchet"
 version = "0.1.0"
 edition = "2021"
+description="Library for truchet tiling"
 license="MIT"
 homepage = "https://github.com/dima634/truchet"
 repository = "https://github.com/dima634/truchet"
