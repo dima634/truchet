@@ -1,7 +1,7 @@
  use rand::{prelude::Distribution, distributions::Standard};
 use svg::{node::element::{Group}, Node};
 
-use crate::{tile::{Tile, ElasticTile}, vec2::Vec2, to_svg::ToSVG};
+use crate::{tile::{Tile, ElasticTile}, vec2::Vec2, to_svg::ToSVG, utils::flatten_2d_index};
 
 pub trait Generator {
     type TileType: Tile;
@@ -12,29 +12,51 @@ pub trait Generator {
 }
 
 #[derive(Clone)]
-pub struct PatternGenerator<TTile: Tile, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize> {
-    tiles: [[TTile; GEN_Y_SIZE]; GEN_X_SIZE]
+pub struct PatternGenerator<TTile: Tile> {
+    gen_size: Vec2<usize>,
+    src_img_block_size: Vec2<usize>,
+    tiles: Vec<TTile>
 }
 
 
-impl<TTile: Tile, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize> 
-    PatternGenerator<TTile, GEN_X_SIZE, GEN_Y_SIZE, SRC_X_SIZE, SRC_Y_SIZE>
-{
-    pub fn new(tiles: [[TTile; GEN_Y_SIZE]; GEN_X_SIZE]) -> Self { 
-        return Self { tiles };
+impl<TTile: Tile> PatternGenerator<TTile> {
+    pub fn from_slice<const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize>(tiles: [[TTile; GEN_Y_SIZE]; GEN_X_SIZE], src_img_block_size: Vec2<usize>) -> Self {
+        let mut vectorized = Vec::with_capacity(GEN_X_SIZE * GEN_Y_SIZE);
+        for tile in tiles.into_iter().flatten() {
+            vectorized.push(tile);
+        }
+
+        return Self { 
+            tiles: vectorized,
+            gen_size: Vec2::new(GEN_X_SIZE, GEN_Y_SIZE),
+            src_img_block_size
+         };
+    }
+
+    pub fn from_vec(mut tiles: Vec<TTile>, gen_size: Vec2<usize>, src_img_block_size: Vec2<usize>) -> Self {
+        let missing_tiles_count = gen_size.x() * gen_size.y() - tiles.len();
+
+        if  missing_tiles_count > 0 {
+            for _ in 0..missing_tiles_count {
+                tiles.push(TTile::default());
+            }
+        }
+
+        return Self { 
+            tiles,
+            gen_size,
+            src_img_block_size
+         };
     }
 }
 
-impl<TTile: Tile, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize>
-    Generator for
-    PatternGenerator<TTile, GEN_X_SIZE, GEN_Y_SIZE, SRC_X_SIZE, SRC_Y_SIZE>
-{
+impl<TTile: Tile> Generator for PatternGenerator<TTile> {
     type TileType = TTile;
 
     fn clone_with_brightness(&self, brightness: f32) -> Self {
         let mut clone = self.clone();
  
-        for tile in clone.tiles.iter_mut().flatten()  {
+        for tile in &mut clone.tiles  {
             tile.set_brightness(brightness);
         }
 
@@ -43,28 +65,25 @@ impl<TTile: Tile, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_
 
     #[inline]
     fn generator_block_size(&self) -> Vec2<usize> {
-        return Vec2::new(GEN_X_SIZE, GEN_Y_SIZE);
+        return self.gen_size;
     }
 
     #[inline]
     fn source_image_block_size(&self) -> Vec2<usize> {
-        return Vec2::new(SRC_X_SIZE, SRC_Y_SIZE);
+        return self.src_img_block_size;
     }
 }
 
-impl<TTile: Tile + ToSVG, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize> 
-    ToSVG for 
-    PatternGenerator<TTile, GEN_X_SIZE, GEN_Y_SIZE, SRC_X_SIZE, SRC_Y_SIZE>
-{
+impl<TTile: Tile + ToSVG> ToSVG for PatternGenerator<TTile> {
     fn to_svg_node(&self, scale: f32, origin: Vec2<f32>) -> Box<dyn Node> {
         let mut g = Group::new();
 
-        for tile_x in 0..GEN_X_SIZE {
-            for tile_y in 0..GEN_Y_SIZE {
+        for tile_x in 0..self.gen_size.x() {
+            for tile_y in 0..self.gen_size.y() {
                 let origin_x = tile_y as f32 * scale + origin.x();
                 let origin_y = tile_x as f32 * scale + origin.y();
 
-                let tile = self.tiles[tile_x][tile_y].to_svg_node(scale, Vec2::new(origin_x, origin_y));
+                let tile = self.tiles[flatten_2d_index(tile_x, tile_y, self.gen_size.y())].to_svg_node(scale, Vec2::new(origin_x, origin_y));
                 g.append(tile);
             }
         }
@@ -73,72 +92,51 @@ impl<TTile: Tile + ToSVG, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, cons
     }
 }
 
-pub fn stripes_ac<const IMG_BLOCK_SIZE_X: usize, const IMG_BLOCK_SIZE_Y: usize>() 
-    -> PatternGenerator<ElasticTile, 2, 2, IMG_BLOCK_SIZE_X, IMG_BLOCK_SIZE_Y> 
-{
-    return PatternGenerator::new([
+pub fn stripes_ac(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTile> {
+    return PatternGenerator::from_slice([
         [ElasticTile::type_a(), ElasticTile::type_c()],
         [ElasticTile::type_c(), ElasticTile::type_a()]
-    ]);
+    ], image_block_size);
 }
 
-pub fn stripes_bd<const IMG_BLOCK_SIZE_X: usize, const IMG_BLOCK_SIZE_Y: usize>()
-    -> PatternGenerator<ElasticTile, 2, 2, IMG_BLOCK_SIZE_X, IMG_BLOCK_SIZE_Y> 
-{
-    return PatternGenerator::new([
+pub fn stripes_bd(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTile> {
+    return PatternGenerator::from_slice([
         [ElasticTile::type_b(), ElasticTile::type_d()],
         [ElasticTile::type_d(), ElasticTile::type_b()]
-    ]);
+    ], image_block_size);
 }
 
-pub fn bosh_d<const IMG_BLOCK_SIZE_X: usize, const IMG_BLOCK_SIZE_Y: usize>()
-    -> PatternGenerator<ElasticTile, 2, 2, IMG_BLOCK_SIZE_X, IMG_BLOCK_SIZE_Y> 
-{
-    return PatternGenerator::new([
+pub fn bosh_d(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTile> {
+    return PatternGenerator::from_slice([
         [ElasticTile::type_b(), ElasticTile::type_a()],
         [ElasticTile::type_c(), ElasticTile::type_d()]
-    ]);
+    ], image_block_size);
 }
 
 
-pub fn fan<const IMG_BLOCK_SIZE_X: usize, const IMG_BLOCK_SIZE_Y: usize>()
-    -> PatternGenerator<ElasticTile, 2, 2, IMG_BLOCK_SIZE_X, IMG_BLOCK_SIZE_Y> 
-{
-    return PatternGenerator::new([
+pub fn fan(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTile> {
+    return PatternGenerator::from_slice([
         [ElasticTile::type_a(), ElasticTile::type_b()],
         [ElasticTile::type_d(), ElasticTile::type_c()]
-    ]);
+    ], image_block_size);
 }
 
 #[derive(Clone)]
-pub struct RandomGenerator<
-    TTile: Tile, 
-    const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, 
-    const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize
->(PatternGenerator<TTile, GEN_X_SIZE, GEN_Y_SIZE, SRC_X_SIZE, SRC_Y_SIZE>);
+pub struct RandomGenerator<TTile: Tile>(PatternGenerator<TTile>);
 
-
-impl<TTile, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize>
-    Default for
-    RandomGenerator<TTile, GEN_X_SIZE, GEN_Y_SIZE, SRC_X_SIZE, SRC_Y_SIZE>
+impl<TTile> RandomGenerator<TTile>
 where 
     TTile: Tile,
     Standard: Distribution<TTile>
 {
-    fn default() -> Self {
-        let mut tiles = [[rand::random(); GEN_Y_SIZE]; GEN_X_SIZE];
-
-        for tile in tiles.iter_mut().flatten() {
-            *tile = rand::random();
-        }
-
-        return Self(PatternGenerator::new(tiles));
+    fn new(gen_size: Vec2<usize>, src_img_block_size: Vec2<usize>) -> Self {
+        let tiles_count = gen_size.x() * gen_size.y();
+        let tiles: Vec<TTile> = (0..tiles_count).map(|_| rand::random()).collect();
+        return Self(PatternGenerator::from_vec(tiles, gen_size, src_img_block_size));
     }
 }
 
-impl<TTile, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize>
-    Generator for
-    RandomGenerator<TTile, GEN_X_SIZE, GEN_Y_SIZE, SRC_X_SIZE, SRC_Y_SIZE>
+impl<TTile> Generator for RandomGenerator<TTile>
 where 
     TTile: Tile,
     Standard: Distribution<TTile>
@@ -146,9 +144,9 @@ where
     type TileType = TTile;
 
     fn clone_with_brightness(&self, brightness: f32) -> Self {
-        let mut clone = Self::default();
+        let mut clone = Self::new(self.generator_block_size(), self.source_image_block_size());
 
-        for tile in clone.0.tiles.iter_mut().flatten() {
+        for tile in &mut clone.0.tiles {
             tile.set_brightness(brightness);
         }
 
@@ -164,19 +162,14 @@ where
     }
 }
 
-impl<TTile: Tile + ToSVG, const GEN_X_SIZE: usize, const GEN_Y_SIZE: usize, const SRC_X_SIZE: usize, const SRC_Y_SIZE: usize> 
-    ToSVG for 
-    RandomGenerator<TTile, GEN_X_SIZE, GEN_Y_SIZE, SRC_X_SIZE, SRC_Y_SIZE>
-{
+impl<TTile: Tile + ToSVG> ToSVG for RandomGenerator<TTile> {
     #[inline]
     fn to_svg_node(&self, scale: f32, origin: Vec2<f32>) -> Box<dyn Node> {
         return self.0.to_svg_node(scale, origin);
     }
 }
 
-pub fn random<const IMG_BLOCK_SIZE_X: usize, const IMG_BLOCK_SIZE_Y: usize>()
-    -> RandomGenerator<ElasticTile, 2, 2, IMG_BLOCK_SIZE_X, IMG_BLOCK_SIZE_Y> 
-{
-    return RandomGenerator::default();
+pub fn random(gen_size: Vec2<usize>, src_img_block_size: Vec2<usize>) -> RandomGenerator<ElasticTile> {
+    return RandomGenerator::new(gen_size, src_img_block_size);
 }
 

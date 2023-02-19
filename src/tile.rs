@@ -3,7 +3,7 @@ use svg::{node::element::Polygon, Node};
 
 use crate::{to_svg::ToSVG, vec2::Vec2};
 
-pub trait Tile: Clone + Copy {
+pub trait Tile: Default + Clone + Copy {
     fn set_brightness(&mut self, brightness: f32);
 }
 
@@ -91,6 +91,13 @@ impl ElasticTile {
     }
 }
 
+impl Default for ElasticTile {
+    #[inline]
+    fn default() -> Self {
+        return Self::type_a();
+    }
+}
+
 impl Tile for ElasticTile {
     fn set_brightness(&mut self, brightness: f32) {
         if brightness < 0.25 {
@@ -113,8 +120,8 @@ impl ToSVG for ElasticTile {
         };
 
         let t = self.point();
-        x.push(*t.x());
-        y.push(*t.y());
+        x.push(t.x());
+        y.push(t.y());
 
         let points: Vec<f32> = x.into_iter()
             .map(|x| x * scale + origin.x())

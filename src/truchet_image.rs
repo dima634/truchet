@@ -1,6 +1,6 @@
-use svg::{node::element::{SVG}, Node};
+use svg::{node::element::Group, Node};
 
-use crate::{vec2::Vec2, image::Image, generator::{Generator}, to_svg::ToSVG};
+use crate::{vec2::Vec2, image::Image, generator::{Generator}, to_svg::ToSVG, utils::flatten_2d_index};
 
 pub struct TruchetImage<TGenerator: Generator> {
     generators_size: Vec2<usize>,
@@ -18,8 +18,8 @@ pub fn generate<TImage: Image, TGenerator: Generator>(image: &TImage, generator:
 
     let source_block_size = truchet.generator.source_image_block_size().x() * truchet.generator.source_image_block_size().y();
 
-    for generator_x in 0..*generators_size.x() {
-        for generator_y in 0..*generators_size.y() {
+    for generator_x in 0..generators_size.x() {
+        for generator_y in 0..generators_size.y() {
             let start_x = truchet.generator.source_image_block_size().x() * generator_x;
             let start_y = truchet.generator.source_image_block_size().y() * generator_y;
             let end_x = start_x + truchet.generator.source_image_block_size().x();
@@ -33,7 +33,6 @@ pub fn generate<TImage: Image, TGenerator: Generator>(image: &TImage, generator:
             }
 
             brightness /= source_block_size as f32;
-            // println!("{}", brightness);
             
             truchet.generators.push(truchet.generator.clone_with_brightness(brightness));
         }
@@ -44,20 +43,19 @@ pub fn generate<TImage: Image, TGenerator: Generator>(image: &TImage, generator:
 
 impl<TGenerator: Generator + ToSVG> ToSVG for TruchetImage<TGenerator> {
     fn to_svg_node(&self, scale: f32, origin: Vec2<f32>) -> Box<dyn Node> {
-        let mut svg = SVG::new()
-            .set("height", "10000px")
-            .set("width", "10000px");
+        let mut g = Group::new();
     
-        for generator_x in 0..*self.generators_size.x() {
-            for generator_y in 0..*self.generators_size.y() {
-                let start_x = (self.generator.generator_block_size().x() * generator_x) as f32 * scale + origin.x();
-                let start_y = (self.generator.generator_block_size().y() * generator_y) as f32 * scale + origin.y();
+        for gen_x in 0..self.generators_size.x() {
+            for gen_y in 0..self.generators_size.y() {
+                let start_x = (self.generator.generator_block_size().x() * gen_x) as f32 * scale + origin.x();
+                let start_y = (self.generator.generator_block_size().y() * gen_y) as f32 * scale + origin.y();
 
-                let gen = self.generators[generator_x * self.generators_size.y() + generator_y].to_svg_node(scale, Vec2::new(start_x, start_y));
-                svg.append(gen);
+                let gen = self.generators[flatten_2d_index(gen_x, gen_y, self.generators_size.y())]
+                    .to_svg_node(scale, Vec2::new(start_x, start_y));
+                g.append(gen);
             }
         }
 
-        return Box::new(svg);
+        return Box::new(g);
     }
 }

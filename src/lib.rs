@@ -5,4 +5,6 @@ pub mod generator;
 pub mod truchet_image;
 pub mod to_svg;
 
+mod utils;
+
 pub use svg;
