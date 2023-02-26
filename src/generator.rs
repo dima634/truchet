@@ -93,42 +93,6 @@ impl<TTile: Tile + ToSVG> ToSVG for PatternGenerator<TTile> {
     }
 }
 
-pub fn stripes_ac(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTriangleTile> {
-    return PatternGenerator::from_slice([
-        [ElasticTriangleTile::type_a(), ElasticTriangleTile::type_c()],
-        [ElasticTriangleTile::type_c(), ElasticTriangleTile::type_a()]
-    ], image_block_size);
-}
-
-pub fn stripes_bd(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTriangleTile> {
-    return PatternGenerator::from_slice([
-        [ElasticTriangleTile::type_b(), ElasticTriangleTile::type_d()],
-        [ElasticTriangleTile::type_d(), ElasticTriangleTile::type_b()]
-    ], image_block_size);
-}
-
-pub fn bosh_d(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTriangleTile> {
-    return PatternGenerator::from_slice([
-        [ElasticTriangleTile::type_b(), ElasticTriangleTile::type_a()],
-        [ElasticTriangleTile::type_c(), ElasticTriangleTile::type_d()]
-    ], image_block_size);
-}
-
-
-pub fn fan(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTriangleTile> {
-    return PatternGenerator::from_slice([
-        [ElasticTriangleTile::type_a(), ElasticTriangleTile::type_b()],
-        [ElasticTriangleTile::type_d(), ElasticTriangleTile::type_c()]
-    ], image_block_size);
-}
-
-pub fn circles(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticCircleTile> {
-    return PatternGenerator::from_slice([
-        [ElasticCircleTile::default(), ElasticCircleTile::default().flipped()],
-        [ElasticCircleTile::default(), ElasticCircleTile::default().flipped()]
-    ], image_block_size);
-}
-
 #[derive(Clone)]
 pub struct RandomGenerator<TTile: Tile>(PatternGenerator<TTile>);
 
@@ -175,6 +139,48 @@ impl<TTile: Tile + ToSVG> ToSVG for RandomGenerator<TTile> {
     fn to_svg_node(&self) -> Box<dyn Node> {
         return self.0.to_svg_node();
     }
+}
+
+pub fn stripes_ac(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTriangleTile> {
+    return PatternGenerator::from_slice([
+        [ElasticTriangleTile::type_a(), ElasticTriangleTile::type_c()],
+        [ElasticTriangleTile::type_c(), ElasticTriangleTile::type_a()]
+    ], image_block_size);
+}
+
+pub fn stripes_bd(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTriangleTile> {
+    return PatternGenerator::from_slice([
+        [ElasticTriangleTile::type_b(), ElasticTriangleTile::type_d()],
+        [ElasticTriangleTile::type_d(), ElasticTriangleTile::type_b()]
+    ], image_block_size);
+}
+
+pub fn bosh_d(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTriangleTile> {
+    return PatternGenerator::from_slice([
+        [ElasticTriangleTile::type_b(), ElasticTriangleTile::type_a()],
+        [ElasticTriangleTile::type_c(), ElasticTriangleTile::type_d()]
+    ], image_block_size);
+}
+
+pub fn fan(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticTriangleTile> {
+    return PatternGenerator::from_slice([
+        [ElasticTriangleTile::type_a(), ElasticTriangleTile::type_b()],
+        [ElasticTriangleTile::type_d(), ElasticTriangleTile::type_c()]
+    ], image_block_size);
+}
+
+pub fn circles(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticCircleTile> {
+    return PatternGenerator::from_slice([
+        [ElasticCircleTile::default(), ElasticCircleTile::default().flipped()],
+        [ElasticCircleTile::default().flipped(), ElasticCircleTile::default()]
+    ], image_block_size);
+}
+
+pub fn waves(image_block_size: Vec2<usize>) -> PatternGenerator<ElasticCircleTile> {
+    return PatternGenerator::from_slice([
+        [ElasticCircleTile::default(), ElasticCircleTile::default().flipped()],
+        [ElasticCircleTile::default(), ElasticCircleTile::default().flipped()]
+    ], image_block_size);
 }
 
 pub fn random(gen_size: Vec2<usize>, src_img_block_size: Vec2<usize>) -> RandomGenerator<ElasticTriangleTile> {
