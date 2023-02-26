@@ -42,17 +42,23 @@ pub fn generate<TImage: Image, TGenerator: Generator>(image: &TImage, generator:
 }
 
 impl<TGenerator: Generator + ToSVG> ToSVG for TruchetImage<TGenerator> {
-    fn to_svg_node(&self, scale: f32, origin: Vec2<f32>) -> Box<dyn Node> {
+    fn to_svg_node(&self) -> Box<dyn Node> {
         let mut g = Group::new();
     
         for gen_x in 0..self.generators_size.x() {
             for gen_y in 0..self.generators_size.y() {
-                let start_x = (self.generator.generator_block_size().x() * gen_x) as f32 * scale + origin.x();
-                let start_y = (self.generator.generator_block_size().y() * gen_y) as f32 * scale + origin.y();
+                let pattern_origin = Vec2::new(
+                    (self.generator.generator_block_size().y() * gen_x) as f32,
+                    (self.generator.generator_block_size().x() * gen_y) as f32
+                );
 
                 let gen = self.generators[flatten_2d_index(gen_x, gen_y, self.generators_size.y())]
-                    .to_svg_node(scale, Vec2::new(start_x, start_y));
-                g.append(gen);
+                    .to_svg_node();
+                let gen_translated = Group::new()
+                    .set("transform", format!("translate({} {})", pattern_origin.x(), pattern_origin.y()))
+                    .add(gen);
+
+                g.append(gen_translated);
             }
         }
 

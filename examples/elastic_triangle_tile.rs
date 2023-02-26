@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use image::GrayImage;
+use svg::node::element::Group;
 use truchet::{image::Image, vec2::Vec2, svg::node::element::SVG, to_svg::ToSVG};
 
 struct ImageAdapter {
@@ -30,12 +31,15 @@ fn main() {
     let grayscale_image = ImageAdapter::new(image.into_luma8());
 
     // Generate "tiles" image
-    let truchet = truchet::truchet_image::generate(&grayscale_image, truchet::generator::stripes_ac(Vec2::new(8, 8)));
+    let truchet = truchet::truchet_image::generate(&grayscale_image, truchet::generator::fan(Vec2::new(8, 8)));
 
     // Convert to svg and save to fs
-    let svg = truchet.to_svg_node(10.0, Vec2::new(0.0, 0.0));
+    let svg = truchet.to_svg_node();
+    let g = Group::new()
+        .set("transform", "scale(10 10)")
+        .add(svg);
     let svg_doc = SVG::new()
-        .add(svg)
+        .add(g)
         .set("height", "10000px")
         .set("width", "10000px");
     truchet::svg::save("./examples/dog_truchet.svg", &svg_doc).expect("Should save to file");

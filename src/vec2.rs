@@ -1,4 +1,4 @@
-use std::ops::{Rem, Mul, Div};
+use std::ops::{Rem, Mul, Div, Add};
 
 #[derive(Clone, Copy)]
 pub struct Vec2<T> {
@@ -40,6 +40,15 @@ impl<T: Copy + Mul<Output = T>> Mul for Vec2<T> {
     }
 }
 
+impl<T: Copy + Mul<Output = T>> Mul<T> for Vec2<T> {
+    type Output = Vec2<T>;
+
+    #[inline]
+    fn mul(self, rhs: T) -> Self::Output {
+        return Self::Output::new(self.x * rhs, self.y * rhs);
+    }
+}
+
 impl<T: Copy + Div<Output = T>> Div for Vec2<T> {
     type Output = Vec2<T>;
 
@@ -49,9 +58,25 @@ impl<T: Copy + Div<Output = T>> Div for Vec2<T> {
     }
 }
 
+impl<T: Copy + Add<Output = T>> Add for Vec2<T> {
+    type Output = Vec2<T>;
+
+    #[inline]
+    fn add(self, rhs: Self) -> Self::Output {
+        return Self::Output::new(self.x + rhs.x, self.y + rhs.y);
+    }
+}
+
 impl<T: Copy> From<(T, T)> for Vec2<T> {
     #[inline]
     fn from(value: (T, T)) -> Self {
         return Self::new(value.0, value.1);
+    }
+}
+
+impl<T> From<Vec2<T>> for (T, T) {
+    #[inline]
+    fn from(val: Vec2<T>) -> Self {
+        return (val.x, val.y);
     }
 }

@@ -3,9 +3,7 @@ use svg::{node::element::Polygon, Node};
 
 use crate::{to_svg::ToSVG, vec2::Vec2};
 
-pub trait Tile: Default + Clone + Copy {
-    fn set_brightness(&mut self, brightness: f32);
-}
+use super::traits::Tile;
 
 #[derive(Clone, Copy)]
 pub enum ElasticTileType {
@@ -55,12 +53,12 @@ impl ToString for ElasticTileType {
 }
 
 #[derive(Clone, Copy)]
-pub struct ElasticTile {
+pub struct ElasticTriangleTile {
     t: f32,
     tile_type: ElasticTileType
 }
 
-impl ElasticTile {
+impl ElasticTriangleTile {
     pub const fn new(t: f32, tile_type: ElasticTileType) -> Self { 
         return Self { t, tile_type };
     }
@@ -91,14 +89,14 @@ impl ElasticTile {
     }
 }
 
-impl Default for ElasticTile {
+impl Default for ElasticTriangleTile {
     #[inline]
     fn default() -> Self {
         return Self::type_a();
     }
 }
 
-impl Tile for ElasticTile {
+impl Tile for ElasticTriangleTile {
     fn set_brightness(&mut self, brightness: f32) {
         if brightness < 0.25 {
             self.t = 0.0;
@@ -110,8 +108,8 @@ impl Tile for ElasticTile {
     }
 }
 
-impl ToSVG for ElasticTile {
-    fn to_svg_node(&self, scale: f32, origin: Vec2<f32>) -> Box<dyn Node> {
+impl ToSVG for ElasticTriangleTile {
+    fn to_svg_node(&self) -> Box<dyn Node> {
         let (mut x, mut y) = match self.tile_type {
             ElasticTileType::A => (vec![1_f32, 0_f32, 0_f32], vec![1_f32, 1_f32, 0_f32]),
             ElasticTileType::B => (vec![0_f32, 0_f32, 1_f32], vec![1_f32, 0_f32, 0_f32]),
@@ -124,9 +122,8 @@ impl ToSVG for ElasticTile {
         y.push(t.y());
 
         let points: Vec<f32> = x.into_iter()
-            .map(|x| x * scale + origin.x())
             .zip(
-                y.into_iter().map(|y| y * scale + origin.y())
+                y.into_iter()
             )
             .flat_map(|(x, y)| [x, y])
             .collect();
@@ -140,13 +137,13 @@ impl ToSVG for ElasticTile {
     }
 }
 
-impl Distribution<ElasticTile> for Standard {
-    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> ElasticTile {
+impl Distribution<ElasticTriangleTile> for Standard {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> ElasticTriangleTile {
         match rng.gen_range(0..=3) {
-            0 => ElasticTile::type_a(),
-            1 => ElasticTile::type_b(),
-            2 => ElasticTile::type_c(),
-            _ => ElasticTile::type_d()
+            0 => ElasticTriangleTile::type_a(),
+            1 => ElasticTriangleTile::type_b(),
+            2 => ElasticTriangleTile::type_c(),
+            _ => ElasticTriangleTile::type_d()
         }
     }
 }
